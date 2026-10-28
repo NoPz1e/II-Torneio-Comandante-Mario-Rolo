@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Torneio de Bombeiros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: red quartel band with reflective chevron strip, then table (wide) + organiser column. */
+:root{
+  --bg:#f5f3f1; --surface:#ffffff; --ink:#1d1a19; --muted:#6c6461; --line:#e3ddd9;
+  --red:#b3141c; --red-ink:#ffffff; --red-deep:#7e0d12; --amber:#e7b324; --amber-ink:#2a2004;
+  --win:#1f7a4a; --draw:#8a7d3a; --loss:#a63a2e; --live:#d1261f; --soft:#f0e9e5;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#151213; --surface:#1f1b1b; --ink:#f1ece9; --muted:#a69c98; --line:#342d2c;
+  --red:#c8232b; --red-ink:#ffffff; --red-deep:#5e0a0e; --amber:#e9b93a; --amber-ink:#231a02;
+  --win:#4cbf83; --draw:#c9b86a; --loss:#e0705f; --live:#ff4d43; --soft:#2a2423; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151213; --surface:#1f1b1b; --ink:#f1ece9; --muted:#a69c98; --line:#342d2c;
+  --red:#c8232b; --red-ink:#ffffff; --red-deep:#5e0a0e; --amber:#e9b93a; --amber-ink:#231a02;
+  --win:#4cbf83; --draw:#c9b86a; --loss:#e0705f; --live:#ff4d43; --soft:#2a2423; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+.vs{font:700 14px var(--display);color:var(--muted);text-transform:uppercase;text-align:center}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header.band{background:var(--red);color:var(--red-ink)}
+header.band .wrap{padding-block:22px 18px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-family:var(--display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:13px;opacity:.85}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,5vw,48px);line-height:1;margin:4px 0 0;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+h1[contenteditable="true"]{outline:none;border-bottom:2px dashed rgba(255,255,255,.45)}
+h1[contenteditable="true"]:focus{border-bottom-color:#fff}
+.chev{height:12px;background:repeating-linear-gradient(-45deg,var(--amber) 0 14px,var(--red-deep) 14px 28px)}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:13px;opacity:.9}
+
+button,.btn{font:600 14px/1 var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 12px;border-radius:6px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible,h1:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button.primary{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+button.primary:hover{background:var(--red-deep);border-color:var(--red-deep)}
+button.ghost-light{background:transparent;color:var(--red-ink);border-color:rgba(255,255,255,.5)}
+button.ghost-light:hover{border-color:#fff}
+button.danger{color:var(--loss)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select{font:500 15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+
+main .wrap{padding-block:24px 48px;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:24px;align-items:start}
+body.screen main .wrap{grid-template-columns:minmax(0,1fr)}
+body.screen .admin{display:none!important}
+@media (max-width:860px){main .wrap{grid-template-columns:minmax(0,1fr)}}
+
+section{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+h2{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin:0}
+.panel-b{padding:14px 16px}
+.stack{display:flex;flex-direction:column;gap:20px}
+.hint{color:var(--muted);font-size:13px;margin:0}
+label.chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+label.chk input{width:auto}
+
+/* Standings */
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;padding:10px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th.l,td.l{text-align:left}
+td{padding:11px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.pos{font:700 18px var(--display);width:44px;color:var(--muted)}
+tr.lead td.pos{color:var(--red)}
+tr.lead td{background:var(--soft)}
+td.team{font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+td.pts{font:800 22px var(--display);color:var(--ink)}
+td.dg.pos-g{color:var(--win)} td.dg.neg-g{color:var(--loss)}
+.form{display:inline-flex;gap:3px}
+.f{width:20px;height:20px;border-radius:4px;display:inline-grid;place-items:center;font:700 11px var(--display);color:#fff}
+.f.V{background:var(--win)} .f.E{background:var(--draw)} .f.D{background:var(--loss)}
+.liveflag{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-left:6px;vertical-align:middle}
+body.screen td{padding:14px 10px;font-size:18px} body.screen td.pts{font-size:28px} body.screen td.team{font-size:20px;max-width:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+
+/* Live matches */
+.live-list{display:flex;flex-direction:column;gap:12px}
+.match{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;background:var(--surface)}
+.match .side{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;min-width:0}
+.match .nm{font-weight:600;overflow-wrap:anywhere}
+.score{font:800 40px/1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+.score .sep{color:var(--muted);font-weight:600}
+.pm{display:flex;gap:6px}
+.pm button{width:38px;height:34px;padding:0;font-size:18px}
+.pm button.plus{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
+.match-foot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:10px}
+.tag-live{font:700 12px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--live);display:flex;align-items:center;gap:6px}
+.tag-live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--live);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tag-live::before{animation:none}}
+/* Cards (disciplinary) */
+.cards{display:flex;flex-wrap:wrap;gap:4px 6px;justify-content:center;min-height:4px}
+.cev{display:inline-flex;align-items:center;gap:4px;font:700 14px var(--display);font-variant-numeric:tabular-nums;background:var(--soft);border-radius:4px;padding:2px 6px 2px 4px}
+.cd{display:inline-block;width:10px;height:14px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.cd.Y{background:#f2c200} .cd.R{background:#d4161d}
+.cev .x{padding:0 2px;font-size:14px}
+.card-add{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.7fr) auto auto;gap:6px;align-items:center}
+.card-add input,.card-add select{padding:6px 8px;font-size:14px}
+.card-add button{padding:8px 10px;display:inline-flex;gap:6px;align-items:center}
+@media (max-width:420px){.card-add{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.flash{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;border-radius:6px;font:700 18px var(--display);text-transform:uppercase;letter-spacing:.04em;animation:flashIn .5s ease-out}
+.flash.Y{background:#f2c200;color:#241c00} .flash.R{background:#d4161d;color:#fff}
+@keyframes flashIn{from{transform:scale(.96);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+.res-cards{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px}
+.res-cards .cev{font-size:12px;color:var(--muted)}
+
+/* Results screen: live matches first and big, table below */
+body.screen #livePanel{order:-1}
+body.screen #livePanel .panel-h{display:none}
+body.screen #livePanel{background:none;border:none}
+body.screen #livePanel .panel-b{padding:0}
+body.screen .live-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px}
+body.screen .match{padding:20px 18px;gap:14px 16px;border-width:2px}
+body.screen .match .nm{font:700 clamp(22px,2.6vw,36px)/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+body.screen .score{font-size:clamp(64px,9vw,128px);gap:14px}
+body.screen .cev{font-size:20px;padding:4px 10px 4px 6px} body.screen .cd{width:14px;height:20px}
+body.screen .tag-live{font-size:16px}
+body.screen .match-foot{justify-content:center}
+body.screen .noLive{font:600 22px var(--display);text-transform:uppercase;letter-spacing:.04em;text-align:center;padding:12px 0}
+
+/* Forms */
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+.row .vs{font:700 14px var(--display);color:var(--muted);text-transform:uppercase}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row2 > *{flex:1 1 auto}
+.goals{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}
+.goals input{text-align:center;font:700 18px var(--display)}
+.inline{display:flex;gap:8px}
+.inline input{flex:1}
+
+ul.plain{list-style:none;margin:0;padding:0}
+ul.plain li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+ul.plain li:last-child{border-bottom:none}
+.res{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center;width:100%}
+.res .a{text-align:right;overflow-wrap:anywhere} .res .b{overflow-wrap:anywhere}
+.res .sc{font:700 18px var(--display);font-variant-numeric:tabular-nums;background:var(--soft);border-radius:4px;padding:2px 8px}
+.res .w{font-weight:700}
+.x{border:none;background:none;color:var(--muted);padding:4px 6px;font-size:16px}
+.x:hover{color:var(--loss)}
+.pts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pts-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.empty strong{display:block;font:700 22px var(--display);text-transform:uppercase;color:var(--ink);margin-bottom:4px;letter-spacing:.03em}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:6px;font-size:14px;max-width:calc(100% - 32px);z-index:20}
+</style>
+<style>
+/* Results screen extras */
+body.screen .wrap{max-width:1600px}
+body.screen .hide-screen{display:none!important}
+.cards{flex-direction:column;align-items:center}
+.cev{font-family:var(--body);font-weight:600;max-width:100%}
+.cev .pn{overflow-wrap:anywhere}
+.cev .pnum{font:700 1em var(--display);color:var(--muted)}
+body.screen .cev{font-size:clamp(17px,1.5vw,24px)}
+body.screen .match .nm{overflow-wrap:normal;word-break:normal;hyphens:auto;font-size:clamp(20px,2.2vw,34px)}
+.flash .cd{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.cev .second,.ev .second{display:inline-flex;align-items:center;gap:4px;margin-left:4px;padding:3px 7px;font:700 12px var(--display);letter-spacing:.04em;background:var(--surface);border:1px solid var(--line);border-radius:4px;color:var(--ink)}
+.cev .second:hover,.ev .second:hover{border-color:var(--muted)}
+.cev .second .cd,.ev .second .cd{width:8px;height:11px}
+.card-add{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,.6fr) auto auto}
+@media (max-width:620px){.card-add{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.card-add input[data-k=name]{grid-column:1/-1;order:-1}}
+/* Goals and scorers */
+.ball{display:inline-block;flex:none;width:15px;height:15px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210.6%22/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210.6%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.7%22/%3E%3Cpolygon%20points%3D%2212.00%2C7.70%2016.09%2C10.67%2014.53%2C15.48%209.47%2C15.48%207.91%2C10.67%22/%3E%3Cline%20x1%3D%2212.00%22%20y1%3D%227.70%22%20x2%3D%2212.00%22%20y2%3D%224.40%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%2212.00%2C4.50%208.29%2C1.81%209.71%2C-2.56%2014.29%2C-2.56%2015.71%2C1.81%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%2216.09%22%20y1%3D%2210.67%22%20x2%3D%2219.23%22%20y2%3D%229.65%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%2219.13%2C9.68%2020.55%2C5.32%2025.13%2C5.32%2026.55%2C9.68%2022.84%2C12.38%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%2214.53%22%20y1%3D%2215.48%22%20x2%3D%2216.47%22%20y2%3D%2218.15%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%2216.41%2C18.07%2020.99%2C18.07%2022.41%2C22.43%2018.70%2C25.12%2014.99%2C22.43%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%229.47%22%20y1%3D%2215.48%22%20x2%3D%227.53%22%20y2%3D%2218.15%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%227.59%2C18.07%209.01%2C22.43%205.30%2C25.12%201.59%2C22.43%203.01%2C18.07%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%227.91%22%20y1%3D%2210.67%22%20x2%3D%224.77%22%20y2%3D%229.65%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%224.87%2C9.68%201.16%2C12.38%20-2.55%2C9.68%20-1.13%2C5.32%203.45%2C5.32%22%20clip-path%3D%22url%28%23c%29%22/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210.6%22/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210.6%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.7%22/%3E%3Cpolygon%20points%3D%2212.00%2C7.70%2016.09%2C10.67%2014.53%2C15.48%209.47%2C15.48%207.91%2C10.67%22/%3E%3Cline%20x1%3D%2212.00%22%20y1%3D%227.70%22%20x2%3D%2212.00%22%20y2%3D%224.40%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%2212.00%2C4.50%208.29%2C1.81%209.71%2C-2.56%2014.29%2C-2.56%2015.71%2C1.81%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%2216.09%22%20y1%3D%2210.67%22%20x2%3D%2219.23%22%20y2%3D%229.65%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%2219.13%2C9.68%2020.55%2C5.32%2025.13%2C5.32%2026.55%2C9.68%2022.84%2C12.38%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%2214.53%22%20y1%3D%2215.48%22%20x2%3D%2216.47%22%20y2%3D%2218.15%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%2216.41%2C18.07%2020.99%2C18.07%2022.41%2C22.43%2018.70%2C25.12%2014.99%2C22.43%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%229.47%22%20y1%3D%2215.48%22%20x2%3D%227.53%22%20y2%3D%2218.15%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%227.59%2C18.07%209.01%2C22.43%205.30%2C25.12%201.59%2C22.43%203.01%2C18.07%22%20clip-path%3D%22url%28%23c%29%22/%3E%3Cline%20x1%3D%227.91%22%20y1%3D%2210.67%22%20x2%3D%224.77%22%20y2%3D%229.65%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22/%3E%3Cpolygon%20points%3D%224.87%2C9.68%201.16%2C12.38%20-2.55%2C9.68%20-1.13%2C5.32%203.45%2C5.32%22%20clip-path%3D%22url%28%23c%29%22/%3E%3C/svg%3E") center/contain no-repeat}
+.goals-list{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.gev{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;max-width:100%}
+.gev .pn{overflow-wrap:anywhere}
+.gev .pnum{font:700 1em var(--display);color:var(--muted)}
+.gev .cnt{font:700 .9em var(--display);background:var(--ink);color:var(--bg);border-radius:3px;padding:0 5px}
+.gev .who{padding:3px 8px;font-size:12px}
+.gev .gname{width:150px;padding:4px 6px;font-size:13px}
+.gev .ok{padding:4px 8px;font-size:12px}
+.gev .x{padding:0 2px;font-size:14px}
+body.screen .gev{font-size:clamp(17px,1.5vw,24px)}
+body.screen .ball{width:22px;height:22px}
+.flash.G{background:var(--win);color:#fff}
+.flash .ball{width:20px;height:20px}
+.card-add{display:flex!important;flex-wrap:wrap;gap:6px}
+.card-add select{flex:1 1 130px;width:auto}
+.card-add input[data-k=name]{flex:2 1 170px;width:auto}
+.card-add input[data-k=num]{flex:0 0 64px;width:64px}
+.card-add button{flex:1 1 auto;justify-content:center}
+.card-add button.plus{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
+.res-goals{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;font-size:12px;color:var(--muted)}
+.res-goals span:first-child{text-align:right}
+.res-goals .ball{width:12px;height:12px;margin:0 4px}
+.scorers{list-style:none;margin:0;padding:0}
+.scorers li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.scorers li:last-child{border-bottom:none}
+.scorers .rk{font:700 16px var(--display);color:var(--muted);font-variant-numeric:tabular-nums}
+.scorers .pn{font-weight:600;overflow-wrap:anywhere}
+.scorers .tm{display:block;font-size:12px;color:var(--muted)}
+.scorers .g{font:800 22px var(--display);font-variant-numeric:tabular-nums}
+body.screen .scorers{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));column-gap:28px}
+body.screen .scorers li:last-child{border-bottom:1px solid var(--line)}
+body.screen .scorers .pn{font-size:20px}
+body.screen .scorers .g{font-size:28px}
+/* Match clock and event minutes */
+.clock-bar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px}
+.clock-bar .per{font:700 13px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.clock{font:800 28px/1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.clock .extra{color:var(--live);font-size:.62em;margin-left:6px}
+.clock-bar.paused .clock{opacity:.45}
+.clock-ctl{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.clock-ctl button{padding:6px 10px;font-size:13px}
+body.screen .clock{font-size:clamp(38px,3.6vw,58px)}
+body.screen .clock-bar .per{font-size:clamp(15px,1.3vw,20px)}
+.emin{font:700 .92em var(--display);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.minb{padding:1px 6px;font:700 12px var(--display);font-variant-numeric:tabular-nums;color:var(--muted);background:var(--surface);border:1px dashed var(--muted);border-radius:3px;min-width:30px}
+.minb:hover{color:var(--ink);border-style:solid}
+.minin{width:72px!important;padding:3px 6px!important;font-size:13px!important}
+.half-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;font-weight:600}
+.half-row .inline{align-items:center;gap:6px}
+.half-row input{width:72px}
+/* Chronological event list per team */
+.events{display:flex;flex-direction:column;gap:5px;width:max-content;max-width:100%;margin:2px auto 0}
+.ev{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px;min-width:0}
+.ev .emin,.ev .minb,.ev .minin{flex:none;min-width:3.4em;text-align:right}
+.ev .emin:empty{visibility:hidden}
+.ev .pn{overflow-wrap:anywhere;min-width:0}
+.ev .icons{display:inline-flex;gap:2px;flex:none}
+.ev .icons .cd{width:11px;height:15px}
+.ev .ball{width:15px;height:15px}
+.pnum{flex:none;font:700 .78em/1 var(--display);font-variant-numeric:tabular-nums;color:var(--muted);border:1.5px solid currentColor;border-radius:4px;padding:2px 4px 1px;letter-spacing:.02em}
+.ev .x{padding:0 2px;font-size:14px}
+body.screen .ev{font-size:clamp(17px,1.5vw,24px);gap:10px}
+body.screen .ev .icons .cd{width:15px;height:21px}
+body.screen .ev .ball{width:21px;height:21px}
+/* Online: login, links, table (mesa) mode */
+.status.off{background:var(--amber);color:var(--amber-ink);padding:3px 8px;border-radius:4px;font-weight:600}
+.login{grid-column:1/-1;border-color:var(--red)}
+.login-form{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.login-form h2{margin-bottom:2px}
+.login-form .inline{flex:1 1 260px;max-width:420px}
+.err{color:var(--loss);flex-basis:100%}
+.link-row{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.link-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.link-txt code{font:500 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);background:var(--soft);padding:3px 6px;border-radius:4px;overflow-wrap:anywhere;margin-top:4px}
+.mesa-link{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line)}
+.mesa-link .link-row{border-bottom:none;flex:1;min-width:0}
+.qr{flex:none;background:#fff;padding:6px;border-radius:6px;line-height:0}
+.qr:empty{display:none}
+.qr img,.qr canvas{width:120px;height:120px}
+.warn{background:var(--soft);padding:8px 10px;border-radius:6px;margin-bottom:6px}
+.auth-line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:10px}
+@media (max-width:520px){.mesa-link{flex-direction:column;align-items:flex-start}}
+
+.mesa-bar{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.mesa-bar .lbl{font:700 13px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-direction:column;gap:8px}
+.chip{text-align:left;padding:14px 14px;font-size:16px;border-width:2px;border-radius:8px}
+.chip span{color:var(--muted);font-weight:500;padding:0 4px}
+.chip.on{border-color:var(--red);background:var(--soft)}
+.chip.on::before{content:"✓ ";color:var(--red);font-weight:800}
+body.mesa main .wrap{grid-template-columns:minmax(0,1fr);max-width:640px;gap:16px}
+body.mesa .mesa-hide{display:none!important}
+body.mesa header.band .wrap{padding-block:14px 12px}
+body.mesa h1{font-size:28px}
+body.mesa #livePanel .panel-h{display:none}
+body.mesa #livePanel .panel-b{padding:10px}
+body.mesa .match{grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:none;padding:4px}
+body.mesa .match > .flash{order:0}
+body.mesa .match > .clock-bar{order:1}
+body.mesa .match > .score{order:2;grid-column:1/-1;justify-content:center;font-size:64px}
+body.mesa .match > .side{order:3;align-self:start}
+body.mesa .match > .card-add{order:4}
+body.mesa .match > .match-foot{order:5}
+body.mesa .clock{font-size:40px}
+body.mesa .clock-bar{gap:10px}
+body.mesa .clock-ctl{width:100%}
+body.mesa .clock-ctl button{flex:1 1 auto;padding:12px 10px;font-size:15px}
+body.mesa .match .nm{font-size:17px}
+body.mesa .pm{width:100%}
+body.mesa .pm button{height:52px;font-size:22px;width:auto;flex:1}
+body.mesa .pm .plus{flex:2.2}
+body.mesa .pm .plus::after{content:" Golo";font-size:17px;font-weight:700}
+body.mesa .card-add select,body.mesa .card-add input{padding:12px 10px;font-size:16px}
+body.mesa .card-add button{padding:13px 10px;font-size:16px}
+body.mesa .gname,body.mesa .minin{font-size:16px!important}
+body.mesa .match-foot button{padding:12px 14px}
+body.mesa .ev{font-size:15px}
+.mesa-msg{padding:16px 4px;font-size:15px}
+.ev{flex-wrap:wrap;row-gap:2px}
+.ev .pn{min-width:3.5em}
+body.mesa .events{width:100%;align-items:stretch}
+body.mesa .ev{gap:5px}
+body.mesa .ev .emin,body.mesa .ev .minb{min-width:2.6em}
+body.mesa .ev .second{margin-left:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar button{flex:1 1 auto}
+.ok{color:var(--win)}
+</style>
+<!-- Configuração do Firebase (ficheiro config.js ao lado deste). Sem ela, a página funciona só neste computador. -->
+<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Classificação ao vivo</div>
+      <h1 id="title" title="Clique para mudar o nome">Torneio de Bombeiros</h1>
+    </div>
+    <div class="head-actions">
+      <span class="status" id="status">Guardado neste computador</span>
+      <button class="ghost-light" id="openScreenBtn" type="button">Abrir ecrã de resultados</button>
+      <button class="ghost-light" id="fsBtn" type="button" hidden>Ecrã inteiro</button>
+      <button class="ghost-light" id="backBtn" type="button" hidden>Painel de gestão</button>
+    </div>
+  </div>
+  <div class="chev" aria-hidden="true"></div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="panel login" id="loginPanel" hidden>
+      <form class="panel-b login-form" id="loginForm">
+        <div>
+          <h2>Entrar como mesa</h2>
+          <p class="hint">Para registar golos, cartões e o tempo, escreva o código das mesas.</p>
+        </div>
+        <div class="inline">
+          <input id="loginCode" type="password" autocomplete="current-password" placeholder="Código das mesas" aria-label="Código das mesas">
+          <button class="primary" type="submit" id="loginBtn">Entrar</button>
+        </div>
+        <p class="hint err" id="loginErr" hidden></p>
+      </form>
+    </div>
+
+    <div class="mesa-bar" id="mesaBar" hidden>
+      <span class="lbl">Jogo desta mesa</span>
+      <div class="chips" id="mesaChips"></div>
+    </div>
+
+    <section class="stack">
+      <div class="panel mesa-hide">
+        <div class="panel-h">
+          <h2>Classificação</h2>
+          <label class="chk"><input type="checkbox" id="incLive" checked> Contar jogos a decorrer</label>
+        </div>
+        <div id="standings"></div>
+        <div class="legend">
+          <span>J jogos</span><span>V vitórias</span><span>E empates</span><span>D derrotas</span><span>GM golos marcados</span><span>GS golos sofridos</span><span>DG diferença</span><span>Pts pontos</span>
+          <span id="ptsRule"></span>
+        </div>
+      </div>
+
+      <div class="panel" id="livePanel">
+        <div class="panel-h"><h2>A decorrer</h2><span class="hint" id="liveCount"></span></div>
+        <div class="panel-b"><div class="live-list" id="live"></div></div>
+      </div>
+
+      <div class="panel mesa-hide" id="scorersPanel">
+        <div class="panel-h"><h2>Melhores marcadores</h2><span class="hint" id="scorersCount"></span></div>
+        <div class="panel-b"><ol class="scorers" id="scorers"></ol></div>
+      </div>
+    </section>
+
+    <section class="stack">
+      <div class="panel admin" id="newMatchPanel">
+        <div class="panel-h"><h2>Novo jogo</h2></div>
+        <div class="panel-b">
+          <div class="row">
+            <select id="selHome" aria-label="Equipa da casa"></select>
+            <span class="vs">vs</span>
+            <select id="selAway" aria-label="Equipa visitante"></select>
+          </div>
+          <div class="row2"><button class="primary" id="startBtn" type="button">Começar jogo ao vivo</button></div>
+          <p class="hint mesa-hide" style="margin-top:12px">Ou registar um resultado já terminado:</p>
+          <div class="goals mesa-hide">
+            <input id="gHome" type="number" min="0" inputmode="numeric" placeholder="0" aria-label="Golos casa">
+            <span class="vs">–</span>
+            <input id="gAway" type="number" min="0" inputmode="numeric" placeholder="0" aria-label="Golos visitante">
+          </div>
+          <div class="row2 mesa-hide"><button id="saveResBtn" type="button">Guardar resultado</button></div>
+        </div>
+      </div>
+
+      <div class="panel hide-screen mesa-hide">
+        <div class="panel-h"><h2>Resultados</h2><span class="hint" id="resCount"></span></div>
+        <div class="panel-b"><ul class="plain" id="results"></ul></div>
+      </div>
+
+      <div class="panel admin mesa-hide" id="linksPanel">
+        <div class="panel-h"><h2>Mesas e ecrã do bar</h2><span class="hint" id="connHint"></span></div>
+        <div class="panel-b" id="linksBody"></div>
+      </div>
+
+      <div class="panel admin mesa-hide">
+        <div class="panel-h"><h2>Equipas</h2><span class="hint" id="teamCount"></span></div>
+        <div class="panel-b">
+          <form class="inline" id="teamForm">
+            <input id="teamName" placeholder="Ex.: B.V. de Mira" maxlength="60" aria-label="Nome da equipa">
+            <button class="primary" type="submit">Adicionar</button>
+          </form>
+          <ul class="plain" id="teams" style="margin-top:8px"></ul>
+        </div>
+      </div>
+
+      <div class="panel admin mesa-hide">
+        <div class="panel-h"><h2>Pontuação e tempo</h2></div>
+        <div class="panel-b">
+          <div class="pts-grid">
+            <label>Vitória<input id="pWin" type="number" min="0" step="1"></label>
+            <label>Empate<input id="pDraw" type="number" min="0" step="1"></label>
+            <label>Derrota<input id="pLoss" type="number" min="0" step="1"></label>
+          </div>
+          <p class="hint" style="margin-top:10px">Desempate: pontos, diferença de golos, golos marcados, confronto direto.</p>
+          <label class="half-row" for="pHalf"><span>Duração de cada parte</span><span class="inline"><input id="pHalf" type="number" min="1" max="90" step="1"><span class="hint">min</span></span></label>
+        </div>
+      </div>
+
+      <div class="panel admin mesa-hide">
+        <div class="panel-h"><h2>Cópia de segurança</h2></div>
+        <div class="panel-b">
+          <p class="hint" style="margin-bottom:10px" id="backupHint">Os dados ficam guardados neste computador e neste browser. Faça uma cópia no fim de cada dia para não perder nada.</p>
+          <div class="toolbar">
+            <button id="exportBtn" type="button">Guardar cópia</button>
+            <button id="importBtn" type="button">Carregar cópia</button>
+            <input type="file" id="importFile" accept=".json,application/json" hidden>
+          </div>
+          <div style="margin-top:12px" id="resetZone"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  const KEY = "torneio-bombeiros-v1";
+  const $ = id => document.getElementById(id);
+  const DEFAULT = () => ({ cfg:{title:"Torneio de Bombeiros",win:3,draw:1,loss:0,half:20}, teams:{}, matches:{} });
+  let S = DEFAULT();
+  let lastRaw = null;
+  let incLive = true;
+
+  // ---------- Storage ----------
+  // With config.js filled in, everything lives in Firebase so the tables' phones and the bar PC share it.
+  // Without it, the page keeps working on this computer only (browser storage).
+  const CFG = window.TORNEIO_CONFIG || {};
+  const FB = CFG.firebase || {};
+  const ONLINE = !!(window.firebase && FB.apiKey && FB.databaseURL);
+  const EMAIL = CFG.emailMesas || "mesas@torneio.pt";
+  let serverOffset = 0;                 // phone and PC clocks agree via the server's time
+  const now = () => Date.now() + serverOffset;
+  let canEdit = !ONLINE, firstData = !ONLINE, connected = false, dbRef = null;
+  let synced = {};                      // last known server value of each piece, as canonical JSON
+
+  // Canonical form: what the database would store (no nulls, no empty lists, sorted keys)
+  function norm(v){
+    if (v===null || v===undefined) return undefined;
+    if (Array.isArray(v)){ const a=v.map(norm).filter(x=>x!==undefined); return a.length?a:undefined; }
+    if (typeof v==="object"){ const o={}; for (const k of Object.keys(v).sort()){ const x=norm(v[k]); if (x!==undefined) o[k]=x; } return Object.keys(o).length?o:undefined; }
+    return v;
+  }
+  // The tournament split into pieces written separately, so two tables never overwrite each other's game
+  function pieces(st){
+    const out = {cfg: st.cfg};
+    for (const [id,t] of Object.entries(st.teams||{})) out["teams/"+id] = t;
+    for (const [id,m] of Object.entries(st.matches||{})) out["matches/"+id] = m;
+    return out;
+  }
+  function adopt(d){
+    d = d || {};
+    const fix = o => { for (const m of Object.values(o||{})) { if (m.goals && !Array.isArray(m.goals)) m.goals=Object.values(m.goals); if (m.cards && !Array.isArray(m.cards)) m.cards=Object.values(m.cards); } return o||{}; };
+    S = { cfg:{...DEFAULT().cfg, ...(d.cfg||{})}, teams:d.teams||{}, matches:fix(d.matches) };
+  }
+
+  function load(){
+    if (ONLINE) return;
+    let raw = null;
+    try { raw = localStorage.getItem(KEY); } catch(e){}
+    lastRaw = raw;
+    if (!raw) { S = DEFAULT(); return; }
+    try { adopt(JSON.parse(raw)); } catch(e){ S = DEFAULT(); }
+  }
+  function save(){
+    if (!ONLINE){
+      const raw = JSON.stringify(S);
+      try { localStorage.setItem(KEY, raw); lastRaw = raw; $("status").textContent = "Guardado às " + new Date().toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}); }
+      catch(e){ $("status").textContent = "Atenção: não foi possível guardar neste browser"; }
+      render(); return;
+    }
+    if (!firstData){ toast("Ainda a ligar ao torneio. Tente daqui a pouco."); return; }
+    if (!canEdit){ toast("Entre com o código das mesas para alterar."); adopt(lastRemote); render(); return; }
+    const cur = pieces(S), upd = {};
+    for (const k of new Set([...Object.keys(cur), ...Object.keys(synced)])){
+      const n = norm(cur[k]), js = n===undefined ? undefined : JSON.stringify(n);
+      if (js !== synced[k]){ upd[k] = n===undefined ? null : n; if (js===undefined) delete synced[k]; else synced[k] = js; }
+    }
+    render();
+    if (!Object.keys(upd).length) return;
+    dbRef.update(upd).catch(err=>{
+      const c = String((err && (err.code||err.message)) || "");
+      toast(/permission/i.test(c) ? "Sem permissão para guardar. Entre outra vez com o código das mesas." : "Não foi possível guardar. Verifique a internet.");
+    });
+  }
+  let lastRemote = {};
+  function startOnline(){
+    firebase.initializeApp(FB);
+    const db = firebase.database();
+    dbRef = db.ref("torneio");
+    db.ref(".info/serverTimeOffset").on("value", s => { serverOffset = +s.val() || 0; });
+    db.ref(".info/connected").on("value", s => { connected = !!s.val(); renderStatus(); });
+    dbRef.on("value", snap => {
+      lastRemote = snap.val() || {};
+      adopt(lastRemote);
+      synced = {};
+      for (const [k,v] of Object.entries(pieces(lastRemote.cfg ? lastRemote : {...lastRemote, cfg:undefined}))){ const n=norm(v); if (n!==undefined) synced[k]=JSON.stringify(n); }
+      firstData = true; render();
+    }, err => { $("status").textContent = "Sem acesso aos dados. Confirme as regras da base de dados."; });
+    firebase.auth().onAuthStateChanged(u => { canEdit = !!u; render(); });
+  }
+  if (!ONLINE){
+    // Other window (the results screen) picks up changes instantly; polling is a fallback.
+    window.addEventListener("storage", e => { if (e.key === KEY) { load(); render(); } });
+    setInterval(() => { let raw=null; try { raw = localStorage.getItem(KEY); } catch(e){} if (raw !== lastRaw) { load(); render(); } }, 1500);
+  }
+  function renderStatus(){
+    const el = $("status");
+    if (!ONLINE){ if (isScreen()) el.textContent = "Atualiza em direto"; return; }
+    el.textContent = !firstData ? "A ligar…" : connected ? (isScreen() ? "Atualiza em direto" : canEdit ? "Ligado · tudo guardado online" : "Ligado") : "Sem internet · guarda quando voltar";
+    el.classList.toggle("off", firstData && !connected);
+  }
+
+  const uid = () => now().toString(36) + Math.random().toString(36).slice(2,7);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  let toastT;
+  function toast(msg){ const t=$("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2600); }
+  const teamName = id => S.teams[id]?.name || "Equipa removida";
+  const isScreen = () => location.hash === "#ecra" || (ONLINE && !canEdit);
+  const isMesa = () => location.hash === "#mesa" && !isScreen();
+  let mesaSel = null; try { mesaSel = localStorage.getItem("torneio-mesa-jogo"); } catch(e){}
+  function setMesa(id){ mesaSel = id; try { localStorage.setItem("torneio-mesa-jogo", id); } catch(e){} render(); }
+
+  // ---------- Standings ----------
+  function compute(){
+    const {win,draw,loss} = S.cfg; const rows = {};
+    for (const [id,t] of Object.entries(S.teams)) rows[id]={id,name:t.name,J:0,V:0,E:0,D:0,GM:0,GS:0,Pts:0,form:[],live:false};
+    const ms = Object.entries(S.matches).map(([id,m])=>({id,...m}))
+      .filter(m => m.status==="done" || (incLive && m.status==="live"))
+      .sort((a,b)=>(a.finished||a.created||0)-(b.finished||b.created||0));
+    for (const m of ms){
+      const h=rows[m.home], a=rows[m.away]; if(!h||!a) continue;
+      const hg=+m.hg||0, ag=+m.ag||0;
+      h.J++; a.J++; h.GM+=hg; h.GS+=ag; a.GM+=ag; a.GS+=hg;
+      if (m.status==="live"){ h.live=a.live=true; }
+      if (hg>ag){ h.V++; a.D++; h.Pts+=win; a.Pts+=loss; h.form.push("V"); a.form.push("D"); }
+      else if (hg<ag){ a.V++; h.D++; a.Pts+=win; h.Pts+=loss; a.form.push("V"); h.form.push("D"); }
+      else { h.E++; a.E++; h.Pts+=draw; a.Pts+=draw; h.form.push("E"); a.form.push("E"); }
+    }
+    const h2h = (x,y) => { let px=0,py=0,gx=0,gy=0;
+      for (const m of ms){
+        let a,b;
+        if (m.home===x.id&&m.away===y.id){a=+m.hg;b=+m.ag} else if (m.home===y.id&&m.away===x.id){a=+m.ag;b=+m.hg} else continue;
+        gx+=a; gy+=b; if(a>b)px+=win; else if(a<b)py+=win; else {px+=draw;py+=draw}
+      }
+      return (py-px) || (gy-gx); };
+    return Object.values(rows).sort((x,y)=> (y.Pts-x.Pts) || ((y.GM-y.GS)-(x.GM-x.GS)) || (y.GM-x.GM) || h2h(x,y) || x.name.localeCompare(y.name,"pt"));
+  }
+
+  function renderStandings(){
+    const rows = compute();
+    if (!firstData){ $("standings").innerHTML = `<div class="empty"><strong>A ligar ao torneio…</strong>Precisa de internet.</div>`; return; }
+    if (!rows.length){
+      $("standings").innerHTML = `<div class="empty"><strong>Ainda sem equipas</strong>${isScreen()?"A tabela aparece quando a organização registar as equipas.":"Adicione as corporações no painel “Equipas” e comece o primeiro jogo."}</div>`;
+      return;
+    }
+    const anyPlayed = rows.some(r=>r.J>0);
+    $("standings").innerHTML = `<div class="tbl-scroll"><table><thead><tr>
+      <th>#</th><th class="l">Equipa</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GM</th><th>GS</th><th>DG</th><th>Pts</th><th class="l">Forma</th></tr></thead><tbody>
+      ${rows.map((r,i)=>{ const dg=r.GM-r.GS; return `<tr class="${i===0&&anyPlayed?"lead":""}">
+        <td class="pos">${i+1}</td>
+        <td class="l team">${esc(r.name)}${r.live?'<span class="liveflag" title="Em jogo"></span>':""}</td>
+        <td>${r.J}</td><td>${r.V}</td><td>${r.E}</td><td>${r.D}</td><td>${r.GM}</td><td>${r.GS}</td>
+        <td class="dg ${dg>0?"pos-g":dg<0?"neg-g":""}">${dg>0?"+":""}${dg}</td>
+        <td class="pts">${r.Pts}</td>
+        <td class="l"><span class="form">${r.form.slice(-5).map(f=>`<span class="f ${f}" title="${{V:"Vitória",E:"Empate",D:"Derrota"}[f]}">${f}</span>`).join("")}</span></td></tr>`;}).join("")}
+      </tbody></table></div>`;
+  }
+
+  function renderLive(){
+    let live = Object.entries(S.matches).filter(([,m])=>m.status==="live").sort((a,b)=>(a[1].created||0)-(b[1].created||0));
+    $("liveCount").textContent = live.length ? `${live.length} ${live.length===1?"jogo":"jogos"}` : "";
+    const w = !isScreen();
+    if (!firstData){ $("live").innerHTML = `<p class="hint">A ligar…</p>`; return; }
+    if (isMesa()){
+      if (!live.length){ $("live").innerHTML = `<p class="hint mesa-msg">Ainda não há jogos a decorrer. Crie o jogo desta mesa em “Novo jogo”, aqui em baixo.</p>`; return; }
+      live = live.filter(([id])=>id===mesaSel);
+      if (!live.length){ $("live").innerHTML = `<p class="hint mesa-msg">Escolha em cima qual é o jogo desta mesa.</p>`; return; }
+    }
+    if (!live.length){ $("live").innerHTML = w ? `<p class="hint">Nenhum jogo a decorrer. Comece um em “Novo jogo”.</p>` : `<p class="hint noLive">Próximo jogo a começar em breve</p>`; return; }
+    // keep what the organiser was typing in the card fields across re-renders
+    const keep = {};
+    $("live").querySelectorAll(".match").forEach(c=>{ const nm=c.querySelector("[data-k=name]"), n=c.querySelector("[data-k=num]"), s=c.querySelector("[data-k=side]"); if(nm) keep[c.dataset.id]={name:nm.value,num:n.value,side:s.value,focus:document.activeElement===nm?"name":document.activeElement===n?"num":""}; });
+    const pmBtns = side => w?`<div class="pm"><button type="button" data-act="g" data-side="${side}" data-d="-1" aria-label="Retirar golo">−</button><button type="button" class="plus" data-act="g" data-side="${side}" data-d="1" aria-label="Golo">+</button></div>`:"";
+    rendering = true;
+    $("live").innerHTML = live.map(([id,m])=>{
+      const fl = flashFor(m);
+      return `
+      <div class="match" data-id="${id}">
+        ${fl?`<div class="flash ${fl.type}">${fl.type==="G"?'<i class="ball"></i>':`<i class="cd ${fl.type}"></i>`}${[fl.label, esc(playerLabel(fl)), esc(teamName(fl.side==="home"?m.home:m.away))].filter(Boolean).join(" · ")}</div>`:""}
+        ${clockBar(id, m, w)}
+        <div class="side"><span class="nm">${esc(teamName(m.home))}</span>${pmBtns("hg")}${eventsHtml(id,m,"home",w)}</div>
+        <div class="score"><span>${+m.hg||0}</span><span class="sep">–</span><span>${+m.ag||0}</span></div>
+        <div class="side"><span class="nm">${esc(teamName(m.away))}</span>${pmBtns("ag")}${eventsHtml(id,m,"away",w)}</div>
+        ${w?`<div class="card-add">
+          <select data-k="side" aria-label="Equipa do jogador"><option value="home">${esc(teamName(m.home))}</option><option value="away">${esc(teamName(m.away))}</option></select>
+          <input data-k="name" type="text" maxlength="40" placeholder="Nome do jogador" aria-label="Nome do jogador" list="pl-${id}-home" autocomplete="off">
+          <datalist id="pl-${id}-home">${playersOf(m.home).map(x=>`<option value="${esc(x.name)}">${x.num?"Nº "+esc(x.num):""}</option>`).join("")}</datalist>
+          <datalist id="pl-${id}-away">${playersOf(m.away).map(x=>`<option value="${esc(x.name)}">${x.num?"Nº "+esc(x.num):""}</option>`).join("")}</datalist>
+          <input data-k="num" type="text" inputmode="numeric" maxlength="3" placeholder="Nº" aria-label="Número da camisola (opcional)">
+          <button type="button" data-act="cy"><i class="cd Y"></i>Amarelo</button>
+          <button type="button" data-act="cr"><i class="cd R"></i>Vermelho</button>
+        </div>`:""}
+        <div class="match-foot"><span class="tag-live">Ao vivo</span>${w?`<span class="confirm"><button type="button" data-act="cancel">Anular</button><button type="button" class="primary" data-act="end">Terminar jogo</button></span>`:""}</div>
+      </div>`; }).join("");
+    rendering = false;
+    for (const [id,v] of Object.entries(keep)){ const c=$("live").querySelector(`.match[data-id="${id}"]`); if(!c) continue;
+      c.querySelector("[data-k=name]").value=v.name; c.querySelector("[data-k=num]").value=v.num; c.querySelector("[data-k=side]").value=v.side; c.querySelector("[data-k=name]").setAttribute("list",`pl-${id}-${v.side}`); if(v.focus) c.querySelector(`[data-k=${v.focus}]`).focus(); }
+    const gi = editGoal && $("live").querySelector(`.gname[data-gid="${editGoal.gid}"]`);
+    if (gi && editGoal.focus){ gi.focus(); gi.setSelectionRange(gi.value.length, gi.value.length); }
+    const mi = editMin && $("live").querySelector(`.minin[data-eid="${editMin.eid}"]`);
+    if (mi && editMin.focus){ mi.focus(); mi.setSelectionRange(mi.value.length, mi.value.length); }
+  }
+
+  let rendering = false; // true while the live list is being redrawn (focus loss then is not the user's doing)
+  // ---------- Match clock ----------
+  // m.clock = {period:"pre"|"1"|"int"|"2"|"end", acc: ms already played in this period, since: timestamp while running}
+  const halfMs = () => (+S.cfg.half||20) * 60000;
+  const clk = m => m.clock || {period:"pre", acc:0, since:null};
+  const periodElapsed = c => (c.acc||0) + (c.since ? now()-c.since : 0);
+  function gameMinute(m){
+    const c = clk(m), H = +S.cfg.half||20;
+    if (c.period!=="1" && c.period!=="2") return null;
+    const full = Math.floor(periodElapsed(c)/60000), base = c.period==="2" ? H : 0;
+    return full < H ? {min: base+full+1, add:0} : {min: base+H, add: full-H+1};
+  }
+  const minLabel = e => e && e.min ? (e.add ? `${e.min}+${e.add}'` : `${e.min}'`) : "";
+  const mmss = ms => { const t=Math.max(0,Math.floor(ms/1000)); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); };
+  function clockHtml(m){
+    const c = clk(m), H = halfMs();
+    if (c.period==="pre") return "00:00";
+    if (c.period==="int") return mmss(H);
+    const e = periodElapsed(c), base = c.period==="2" ? H : 0;
+    if (c.period==="end") return mmss(base + Math.min(e,H));
+    return mmss(base + Math.min(e,H)) + (e>H ? `<span class="extra">+${mmss(e-H)}</span>` : "");
+  }
+  const PERIOD = {pre:"Por começar", "1":"1.ª parte", int:"Intervalo", "2":"2.ª parte", end:"Tempo terminado"};
+  function clockBar(id, m, editable){
+    const c = clk(m), running = !!c.since;
+    let ctl = "";
+    if (editable){
+      if (c.period==="pre") ctl = `<button type="button" class="primary" data-act="k1">Começar 1.ª parte</button>`;
+      else if (c.period==="int") ctl = `<button type="button" class="primary" data-act="k2">Começar 2.ª parte</button>`;
+      else if (c.period==="1" || c.period==="2") ctl = `<button type="button" data-act="kadj" data-d="-60" title="Tirar 1 minuto ao relógio">−1'</button>${running?`<button type="button" data-act="kpause">Pausar</button>`:`<button type="button" class="primary" data-act="kplay">Retomar</button>`}<button type="button" data-act="kadj" data-d="60" title="Somar 1 minuto ao relógio">+1'</button>${c.period==="1"?`<button type="button" data-act="kint">Intervalo</button>`:`<button type="button" data-act="kfin">Fim do tempo</button>`}`;
+    }
+    const paused = (c.period==="1"||c.period==="2") && !running;
+    return `<div class="clock-bar${paused?" paused":""}"><span class="per">${PERIOD[c.period]||""}${paused?" · parado":""}</span><span class="clock" data-clock="${id}">${clockHtml(m)}</span>${ctl?`<span class="clock-ctl">${ctl}</span>`:""}</div>`;
+  }
+  function setClock(m, act, d){
+    const c = {...clk(m)}, t0 = now();
+    if (act==="k1"){ c.period="1"; c.acc=0; c.since=t0; }
+    else if (act==="k2"){ c.period="2"; c.acc=0; c.since=t0; }
+    else if (act==="kpause"){ c.acc=periodElapsed(c); c.since=null; }
+    else if (act==="kplay"){ c.since=t0; }
+    else if (act==="kadj"){ c.acc=Math.max(-periodElapsed({...c,acc:0}), (c.acc||0)+d*1000); }
+    else if (act==="kint"){ c.period="int"; c.acc=0; c.since=null; }
+    else if (act==="kfin" || act==="end"){ c.acc=periodElapsed(c); c.since=null; if (c.period!=="pre") c.period="end"; }
+    m.clock = c;
+  }
+  // tick the visible clocks every second without re-rendering the page
+  setInterval(()=>{ document.querySelectorAll("[data-clock]").forEach(el=>{ const m=S.matches[el.dataset.clock]; if(m && clk(m).since) el.innerHTML=clockHtml(m); }); }, 1000);
+
+  // editing the minute of a goal or card: {eid, kind:"g"|"c", value, focus}
+  let editMin = null;
+  function minHtml(mid, e, kind, editable){
+    if (!editable) return e.min ? `<span class="emin">${minLabel(e)}</span>` : "";
+    if (editMin && editMin.eid===e.id) return `<input class="minin" data-k="emin" data-eid="${e.id}" data-kind="${kind}" inputmode="numeric" maxlength="6" placeholder="23 ou 20+2" aria-label="Minuto" value="${esc(editMin.value)}">`;
+    return `<button type="button" class="minb" data-act="emin" data-eid="${e.id}" data-kind="${kind}" title="Mudar o minuto">${e.min?minLabel(e):"min"}</button>`;
+  }
+  function saveMin(m){
+    if (!editMin) return;
+    const list = editMin.kind==="g" ? (m.goals||[]) : (m.cards||[]);
+    const e = list.find(x=>x.id===editMin.eid);
+    const v = editMin.value.trim().replace(/['’\s]/g,"");
+    editMin = null;
+    if (!e) { renderLive(); return; }
+    if (v===""){ delete e.min; delete e.add; save(); return; }
+    const mt = v.match(/^(\d{1,3})(?:\+(\d{1,2}))?$/);
+    if (!mt){ toast("Escreva o minuto assim: 23 ou 20+2."); renderLive(); return; }
+    e.min = +mt[1]; e.add = mt[2] ? +mt[2] : 0; save();
+  }
+
+  // ---------- Goals ----------
+  let editGoal = null; // {gid, value, focus} while the organiser types who scored
+  function groupScorers(list){
+    const out = []; const idx = {};
+    for (const g of list){ if (!g.name && !g.num) continue;
+      const k = g.name ? g.name.toLowerCase() : "#"+g.num;
+      if (idx[k]===undefined){ idx[k]=out.length; out.push({name:g.name, num:g.num, n:0, mins:[]}); }
+      out[idx[k]].n++; if (!out[idx[k]].num && g.num) out[idx[k]].num=g.num; if (g.min) out[idx[k]].mins.push(minLabel(g)); }
+    return out;
+  }
+  function goalsHtml(mid, m, side, editable){
+    const list = (m.goals||[]).filter(g=>g.side===side).sort((a,b)=>a.t-b.t);
+    if (!list.length) return "";
+    if (!editable){
+      const gs = groupScorers(list);
+      return gs.length ? `<div class="goals-list">${gs.map(g=>`<span class="gev"><i class="ball"></i><span class="pn">${esc(g.name || "Nº "+g.num)}</span>${g.mins.length?`<span class="emin">${g.mins.join(" ")}</span>`:""}${g.n>g.mins.length && g.n>1?`<span class="cnt">${g.n}</span>`:""}</span>`).join("")}</div>` : "";
+    }
+    return `<div class="goals-list">${list.map(g=>{
+      let who;
+      if (editGoal && editGoal.gid===g.id) who = `<input class="gname" data-k="gname" data-gid="${g.id}" list="pl-${mid}-${side}" autocomplete="off" maxlength="40" placeholder="Quem marcou?" aria-label="Quem marcou" value="${esc(editGoal.value)}"><button type="button" class="ok primary" data-act="gnameok" data-gid="${g.id}">OK</button>`;
+      else if (g.name || g.num) who = `<span class="pn">${esc(g.name||"")}</span>${g.num?`<span class="pnum">${g.name?"":"Nº "}${esc(g.num)}</span>`:""}`;
+      else who = `<button type="button" class="who" data-act="gname" data-gid="${g.id}">Quem marcou?</button>`;
+      return `<span class="gev"><i class="ball"></i>${minHtml(mid,g,"g",true)}${who}<button class="x" type="button" data-act="gdel" data-gid="${g.id}" aria-label="Apagar golo">×</button></span>`;
+    }).join("")}</div>`;
+  }
+  // shirt number as a small boxed badge, so it never reads as part of the minute
+  const numBadge = (e) => e.num ? `<span class="pnum" title="Número da camisola">${e.name?"":"Nº "}${esc(e.num)}</span>` : "";
+  // goals and cards in the order they happened: by match minute, then by the moment they were registered
+  function byMinute(a,b){
+    if (a.min && b.min) return (a.min-b.min) || ((a.add||0)-(b.add||0)) || (a.t-b.t);
+    return a.t-b.t;
+  }
+  function eventsHtml(mid, m, side, editable){
+    const evs = [
+      ...(m.goals||[]).filter(g=>g.side===side).map(e=>({k:"g",e})),
+      ...(m.cards||[]).filter(c=>c.side===side).map(e=>({k:"c",e})),
+    ].sort((a,b)=>byMinute(a.e,b.e));
+    if (!editable) evs.splice(0, evs.length, ...evs.filter(x=>x.k==="c" || x.e.name || x.e.num || x.e.min));
+    if (!evs.length) return "";
+    return `<div class="events">${evs.map(({k,e})=>{
+      const min = editable ? minHtml(mid,e,k,true) : `<span class="emin">${minLabel(e)}</span>`;
+      if (k==="g"){
+        let who;
+        if (editable && editGoal && editGoal.gid===e.id) who = `<input class="gname" data-k="gname" data-gid="${e.id}" list="pl-${mid}-${side}" autocomplete="off" maxlength="40" placeholder="Quem marcou?" aria-label="Quem marcou" value="${esc(editGoal.value)}"><button type="button" class="ok primary" data-act="gnameok" data-gid="${e.id}">OK</button>`;
+        else if (e.name || e.num) who = `<span class="pn">${esc(e.name||"")}</span>${numBadge(e)}`;
+        else who = editable ? `<button type="button" class="who" data-act="gname" data-gid="${e.id}">Quem marcou?</button>` : `<span class="pn">Golo</span>`;
+        return `<span class="ev" title="Golo">${min}<i class="ball"></i>${who}${editable?`<button class="x" type="button" data-act="gdel" data-gid="${e.id}" aria-label="Apagar golo">×</button>`:""}</span>`;
+      }
+      const icon = e.type==="YR" ? '<i class="cd Y"></i><i class="cd R"></i>' : `<i class="cd ${e.type}"></i>`;
+      const second = editable && e.type==="Y" && !(m.cards||[]).some(o=>o.type==="YR" && samePlayer(o,e)) ? `<button class="second" type="button" data-act="c2" data-cid="${e.id}" title="Dar segundo amarelo a este jogador"><i class="cd Y"></i>2.º</button>` : "";
+      return `<span class="ev" title="${CARD_LABEL[e.type]}">${min}<span class="icons">${icon}</span><span class="pn">${esc(e.name||"")}</span>${numBadge(e)}${second}${editable?`<button class="x" type="button" data-act="cdel" data-cid="${e.id}" aria-label="Apagar cartão">×</button>`:""}</span>`;
+    }).join("")}</div>`;
+  }
+  function addGoal(m, side, name, num){
+    m.goals = m.goals || [];
+    const key = side==="home" ? "hg" : "ag";
+    m[key] = (+m[key]||0) + 1;
+    const g = {id:uid(), side, name:name||"", num:num||"", t:now(), ...(gameMinute(m)||{})};
+    m.goals.push(g); return g;
+  }
+  function knownNum(m, side, name){
+    if (!name) return "";
+    const hit = playersOf(side==="home"?m.home:m.away).find(x=>x.name.toLowerCase()===name.toLowerCase());
+    return hit ? hit.num : "";
+  }
+  function renderScorers(){
+    const map = new Map();
+    for (const m of Object.values(S.matches)){
+      if (m.status!=="done" && !(incLive && m.status==="live")) continue;
+      for (const g of (m.goals||[])){ if (!g.name) continue;
+        const team = g.side==="home" ? m.home : m.away;
+        const k = team+"|"+g.name.toLowerCase();
+        const r = map.get(k) || {name:g.name, team, n:0}; r.n++; map.set(k,r); }
+    }
+    const rows = [...map.values()].sort((a,b)=>b.n-a.n || a.name.localeCompare(b.name,"pt")).slice(0,10);
+    $("scorersCount").textContent = rows.length ? "Top " + rows.length : "";
+    $("scorersPanel").hidden = isScreen() && !rows.length;
+    let rank = 0, prev = null;
+    $("scorers").innerHTML = rows.length ? rows.map((r,i)=>{ if (r.n!==prev){ rank=i+1; prev=r.n; }
+      return `<li><span class="rk">${rank}</span><span><span class="pn">${esc(r.name)}</span><span class="tm">${esc(teamName(r.team))}</span></span><span class="g">${r.n}</span></li>`; }).join("")
+      : `<li class="hint" style="display:block">Ainda sem marcadores. Ao marcar um golo, carregue em “Quem marcou?” e escreva o nome.</li>`;
+  }
+
+  // ---------- Cards ----------
+  const CARD_LABEL = {Y:"Cartão amarelo", R:"Cartão vermelho", YR:"2.º amarelo · expulso"};
+  function cardsHtml(m, side, editable, mid){
+    const list = (m.cards||[]).filter(c=>c.side===side);
+    if (!list.length) return `<div class="cards"></div>`;
+    return `<div class="cards">${list.map(c=>`<span class="cev" title="${CARD_LABEL[c.type]}">${c.type==="YR"?'<i class="cd Y"></i><i class="cd R"></i>':`<i class="cd ${c.type}"></i>`}${editable?minHtml(mid,c,"c",true):""}<span class="pn">${esc(c.name||"")}</span>${c.num?`<span class="pnum">${c.name?"":"Nº "}${esc(c.num)}</span>`:""}${editable?"":minHtml(mid,c,"c",false)}${editable && c.type==="Y" && !(m.cards||[]).some(o=>o.type==="YR" && samePlayer(o,c)) ? `<button class="second" type="button" data-act="c2" data-cid="${c.id}" title="Dar segundo amarelo a este jogador"><i class="cd Y"></i>2.º</button>`:""}${editable?`<button class="x" type="button" data-act="cdel" data-cid="${c.id}" aria-label="Apagar cartão">×</button>`:""}</span>`).join("")}</div>`;
+  }
+  function flashFor(m){
+    const c = (m.cards||[]).slice(-1)[0], g = (m.goals||[]).slice(-1)[0];
+    const e = [c,g].filter(Boolean).sort((a,b)=>b.t-a.t)[0];
+    if (!e || now()-e.t > 20000) return null;
+    if (e===g) return { type:"G", label:"Golo"+(g.min?" "+minLabel(g):""), name:g.name, num:g.num, side:g.side };
+    return { type: c.type==="YR" ? "R" : c.type, label: CARD_LABEL[c.type]+(c.min?" "+minLabel(c):""), name:c.name, num:c.num, side:c.side };
+  }
+  // every named player of this team seen so far (cards and goals), across all games
+  function playersOf(teamId){
+    const map = new Map();
+    for (const mm of Object.values(S.matches)) for (const c of [...(mm.cards||[]), ...(mm.goals||[])]){
+      const t = c.side==="home" ? mm.home : mm.away;
+      if (t!==teamId || !c.name) continue;
+      const k = c.name.toLowerCase(); if (!map.has(k) || c.num) map.set(k,{name:map.get(k)?.name||c.name, num:c.num||map.get(k)?.num||""});
+    }
+    return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,"pt"));
+  }
+  const playerLabel = c => [c.name, c.num ? "Nº "+c.num : ""].filter(Boolean).join(" ");
+  const samePlayer = (a,b) => a.side===b.side && ((a.name && b.name && a.name.toLowerCase()===b.name.toLowerCase()) || (!a.name && !b.name && a.num && a.num===b.num) || (a.num && b.num && a.num===b.num && (!a.name||!b.name)));
+  function addCard(m, side, name, num, color){
+    m.cards = m.cards || [];
+    let type = color;
+    const p = {side,name,num};
+    const prev = m.cards.find(c=>samePlayer(c,p) && c.type==="Y");
+    if (color==="Y" && prev){ type = "YR"; name = prev.name || name; num = num || prev.num; }
+    m.cards.push({id:uid(), side, name, num, type, t:now(), ...(gameMinute(m)||{})});
+    return type;
+  }
+  // let the on-screen card banner disappear by itself
+  setInterval(()=>{ const tnow=now();
+    if (Object.values(S.matches).some(m=>m.status==="live" && [...(m.cards||[]),...(m.goals||[])].some(c=>tnow-c.t < 26000))) renderLive(); }, 5000);
+
+  const scorerTxt = g => esc(g.name||"Nº "+g.num) + (g.mins.length ? " "+g.mins.join(", ") : (g.n>1?` (${g.n})`:""));
+  function renderResults(){
+    const done = Object.entries(S.matches).filter(([,m])=>m.status==="done").sort((a,b)=>(b[1].finished||0)-(a[1].finished||0));
+    $("resCount").textContent = done.length ? `${done.length} ${done.length===1?"jogo":"jogos"}` : "";
+    if (!done.length){ $("results").innerHTML = `<li class="hint">Ainda não há jogos terminados.</li>`; return; }
+    const w = !isScreen();
+    $("results").innerHTML = done.map(([id,m])=>{ const hg=+m.hg||0, ag=+m.ag||0; return `<li><div class="res">
+      <span class="a ${hg>ag?"w":""}">${esc(teamName(m.home))}</span><span class="sc">${hg}–${ag}</span><span class="b ${ag>hg?"w":""}">${esc(teamName(m.away))}</span>
+      ${w?`<button class="x" type="button" data-del-match="${id}" aria-label="Apagar resultado" title="Apagar resultado">×</button>`:"<span></span>"}
+      ${(m.goals||[]).some(g=>g.name||g.num)?`<div class="res-goals"><span>${groupScorers((m.goals||[]).filter(g=>g.side==="home").sort((a,b)=>a.t-b.t)).map(scorerTxt).join(", ")}</span><i class="ball"></i><span>${groupScorers((m.goals||[]).filter(g=>g.side==="away").sort((a,b)=>a.t-b.t)).map(scorerTxt).join(", ")}</span></div>`:""}
+      ${(m.cards||[]).length?`<div class="res-cards">${m.cards.map(c=>`<span class="cev" title="${CARD_LABEL[c.type]} · ${esc(teamName(c.side==="home"?m.home:m.away))}">${c.type==="YR"?'<i class="cd Y"></i><i class="cd R"></i>':`<i class="cd ${c.type}"></i>`}${c.min?`<span class="emin">${minLabel(c)}</span>`:""}${esc(playerLabel(c))}</span>`).join("")}</div>`:""}</div></li>`; }).join("");
+  }
+
+  function renderTeams(){
+    const list = Object.entries(S.teams).sort((a,b)=>a[1].name.localeCompare(b[1].name,"pt"));
+    $("teamCount").textContent = list.length ? `${list.length}` : "";
+    const used = new Set(Object.values(S.matches).flatMap(m=>[m.home,m.away]));
+    $("teams").innerHTML = list.length ? list.map(([id,t])=>`<li><span>${esc(t.name)}</span>${used.has(id)?`<span class="hint">tem jogos</span>`:`<button class="x" type="button" data-del-team="${id}" aria-label="Remover ${esc(t.name)}" title="Remover">×</button>`}</li>`).join("")
+      : `<li class="hint">Sem equipas. Escreva o nome da corporação e carregue em Adicionar.</li>`;
+    const opts = `<option value="">Escolher equipa</option>` + list.map(([id,t])=>`<option value="${id}">${esc(t.name)}</option>`).join("");
+    for (const sel of [$("selHome"),$("selAway")]){ const v=sel.value; sel.innerHTML=opts; if (S.teams[v]) sel.value=v; }
+  }
+
+  function renderCfg(){
+    const {win,draw,loss,title} = S.cfg;
+    if (document.activeElement!==$("title")) $("title").textContent = title || "Torneio de Bombeiros";
+    document.title = title || "Torneio de Bombeiros";
+    for (const [k,el] of [["win","pWin"],["draw","pDraw"],["loss","pLoss"],["half","pHalf"]]) if (document.activeElement!==$(el)) $(el).value = S.cfg[k];
+    $("ptsRule").textContent = `· Vitória ${win} · Empate ${draw} · Derrota ${loss}`;
+  }
+
+  function render(){
+    const scr = isScreen(), mesa = isMesa();
+    document.body.classList.toggle("screen", scr);
+    document.body.classList.toggle("mesa", mesa);
+    $("title").contentEditable = scr || mesa ? "false" : "true";
+    $("openScreenBtn").hidden = scr || mesa;
+    $("fsBtn").hidden = location.hash!=="#ecra" || !document.fullscreenEnabled;
+    $("backBtn").hidden = !scr || (ONLINE && !canEdit);
+    $("loginPanel").hidden = !(ONLINE && !canEdit && location.hash!=="#ecra");
+    renderStatus(); renderMesaBar(); renderLinks();
+    renderCfg(); renderTeams(); renderStandings(); renderLive(); renderScorers(); renderResults();
+  }
+  function renderMesaBar(){
+    const bar = $("mesaBar"); bar.hidden = !isMesa(); if (bar.hidden) return;
+    const live = Object.entries(S.matches).filter(([,m])=>m.status==="live").sort((a,b)=>(a[1].created||0)-(b[1].created||0));
+    $("mesaChips").innerHTML = live.length ? live.map(([id,m])=>`<button type="button" class="chip${id===mesaSel?" on":""}" data-mesa="${id}" aria-pressed="${id===mesaSel}">${esc(teamName(m.home))} <span>vs</span> ${esc(teamName(m.away))}</button>`).join("") : `<span class="hint">Sem jogos a decorrer</span>`;
+  }
+  let linksKey = "";
+  function renderLinks(){
+    const body = $("linksBody");
+    const base = location.href.split("#")[0];
+    const hosted = /^https?:/.test(location.protocol);
+    $("connHint").textContent = ONLINE ? (connected ? "Ligado" : "Sem ligação") : "Só neste computador";
+    $("backupHint").textContent = ONLINE ? "Os dados ficam guardados online e aparecem em todos os aparelhos. Uma cópia no fim do dia serve de garantia." : "Os dados ficam guardados neste computador e neste browser. Faça uma cópia no fim de cada dia para não perder nada.";
+    const key = [ONLINE, hosted, base, canEdit].join("|"); if (key===linksKey) return; linksKey = key;
+    if (!ONLINE){
+      body.innerHTML = `<p class="hint">Para ligar os telemóveis das mesas ao ecrã do bar, preencha o ficheiro <strong>config.js</strong> com os dados do Firebase e ponha a página no GitHub Pages. Até lá, tudo funciona só neste computador.</p>`;
+      return;
+    }
+    const row = (id, title, help, url) => `<div class="link-row"><div class="link-txt"><strong>${title}</strong><span class="hint">${help}</span><code id="${id}">${esc(url)}</code></div><button type="button" data-copy="${id}">Copiar</button></div>`;
+    body.innerHTML = `
+      ${hosted?"":`<p class="hint warn">Estes links só funcionam depois de a página estar no GitHub Pages.</p>`}
+      ${row("lnkEcra","Ecrã do bar","Abrir no PC do bar. Não precisa de código.", base+"#ecra")}
+      <div class="mesa-link">
+        ${row("lnkMesa","Mesas (telemóvel)","Cada mesa abre este link, entra com o código e escolhe o seu jogo.", base+"#mesa")}
+        <div class="qr" id="qrMesa" aria-label="Código QR do link das mesas"></div>
+      </div>
+      ${row("lnkGestao","Gestão","Este painel, para criar equipas e jogos.", base)}
+      <div class="auth-line"><span class="hint">Entrou com o código das mesas.</span><button type="button" id="logoutBtn">Sair</button></div>`;
+    if (window.QRCode){ try { new QRCode($("qrMesa"), {text: base+"#mesa", width:132, height:132, correctLevel: QRCode.CorrectLevel.M}); } catch(e){} }
+  }
+
+  // ---------- Actions ----------
+  $("teamForm").addEventListener("submit", e=>{ e.preventDefault();
+    const name=$("teamName").value.trim(); if(!name) return;
+    if (Object.values(S.teams).some(t=>t.name.toLowerCase()===name.toLowerCase())){ toast("Essa equipa já existe."); return; }
+    $("teamName").value=""; S.teams[uid()]={name, created:now()}; save(); $("teamName").focus();
+  });
+  $("teams").addEventListener("click", e=>{ const id=e.target.closest("[data-del-team]")?.dataset.delTeam; if(id){ delete S.teams[id]; save(); } });
+
+  function pickTeams(){
+    const h=$("selHome").value, a=$("selAway").value;
+    if(!h||!a){ toast("Escolha as duas equipas."); return null; }
+    if(h===a){ toast("Escolha duas equipas diferentes."); return null; }
+    return [h,a];
+  }
+  $("startBtn").addEventListener("click", ()=>{ const p=pickTeams(); if(!p) return;
+    const nid = uid();
+    S.matches[nid]={home:p[0],away:p[1],hg:0,ag:0,status:"live",created:now(),clock:{period:"pre",acc:0,since:null}};
+    if (isMesa()){ mesaSel = nid; try { localStorage.setItem("torneio-mesa-jogo", nid); } catch(e){} }
+    save(); toast("Jogo criado. No apito inicial, carregue em “Começar 1.ª parte”.");
+  });
+  $("saveResBtn").addEventListener("click", ()=>{ const p=pickTeams(); if(!p) return;
+    const hg=parseInt($("gHome").value,10), ag=parseInt($("gAway").value,10);
+    if(!(hg>=0)||!(ag>=0)){ toast("Indique os golos das duas equipas."); return; }
+    $("gHome").value=""; $("gAway").value="";
+    const t0=now(); S.matches[uid()]={home:p[0],away:p[1],hg,ag,status:"done",created:t0,finished:t0}; save(); toast("Resultado guardado.");
+  });
+
+  $("live").addEventListener("change", e=>{
+    const card=e.target.closest(".match"); if(!card) return;
+    if (e.target.dataset.k==="side") card.querySelector("[data-k=name]").setAttribute("list",`pl-${card.dataset.id}-${e.target.value}`);
+  });
+  function saveGoalName(m, gid){
+    const g = (m.goals||[]).find(x=>x.id===gid); if(!g) return;
+    const name = (editGoal && editGoal.gid===gid ? editGoal.value : "").trim().replace(/\s+/g," ");
+    editGoal = null;
+    if (name){ g.name = name; g.num = g.num || knownNum(m, g.side, name); toast("Golo de " + name); }
+    save();
+  }
+  $("live").addEventListener("keydown", e=>{
+    if (e.target.dataset.k==="emin"){
+      const m = S.matches[e.target.closest(".match").dataset.id];
+      if (e.key==="Enter"){ e.preventDefault(); saveMin(m); }
+      else if (e.key==="Escape"){ editMin = null; renderLive(); }
+      return;
+    }
+    if (e.target.dataset.k==="gname"){
+      const m = S.matches[e.target.closest(".match").dataset.id];
+      if (e.key==="Enter"){ e.preventDefault(); saveGoalName(m, e.target.dataset.gid); }
+      else if (e.key==="Escape"){ editGoal = null; renderLive(); }
+    }
+  });
+  $("live").addEventListener("focusout", e=>{
+    if (rendering) return;
+    if (e.target.dataset.k==="gname" && editGoal) editGoal.focus = false;
+    // leaving the minute box saves it
+    if (e.target.dataset.k==="emin" && editMin && e.target.isConnected){ const m = S.matches[e.target.closest(".match").dataset.id]; setTimeout(()=>{ if (editMin && editMin.eid===e.target.dataset.eid) saveMin(m); }, 0); }
+  });
+  $("live").addEventListener("focusin", e=>{ if (e.target.dataset.k==="gname" && editGoal) editGoal.focus = true; if (e.target.dataset.k==="emin" && editMin) editMin.focus = true; });
+  $("live").addEventListener("input", e=>{
+    if (e.target.dataset.k==="gname"){ if (editGoal) editGoal.value = e.target.value; return; }
+    if (e.target.dataset.k==="emin"){ if (editMin) editMin.value = e.target.value; return; }
+    if (e.target.dataset.k!=="name") return;
+    const card=e.target.closest(".match"), m=S.matches[card.dataset.id]; if(!m) return;
+    const side=card.querySelector("[data-k=side]").value;
+    const hit=playersOf(side==="home"?m.home:m.away).find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase());
+    if (hit && hit.num) card.querySelector("[data-k=num]").value=hit.num;
+  });
+  $("live").addEventListener("click", e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    const card=b.closest(".match"); const id=card.dataset.id; const m=S.matches[id]; if(!m) return;
+    const act=b.dataset.act;
+    if (act && act[0]==="k" && act.length<=6 && ["k1","k2","kpause","kplay","kadj","kint","kfin"].includes(act)){
+      setClock(m, act, +b.dataset.d||0); save();
+      if (act==="k1") toast("1.ª parte a decorrer."); else if (act==="k2") toast("2.ª parte a decorrer."); else if (act==="kint") toast("Intervalo.");
+      return;
+    }
+    if (act==="emin"){ editMin = {eid:b.dataset.eid, kind:b.dataset.kind, value:"", focus:true};
+      const e = (b.dataset.kind==="g"?m.goals:m.cards||[]).find(x=>x.id===b.dataset.eid); if (e && e.min) editMin.value = (e.add?`${e.min}+${e.add}`:String(e.min));
+      renderLive(); return; }
+    if (act==="g"){
+      const side = b.dataset.side==="hg" ? "home" : "away";
+      if (+b.dataset.d > 0){ const g = addGoal(m, side); editGoal = {gid:g.id, value:"", focus:true}; save(); }
+      else {
+        m[b.dataset.side] = Math.max(0,(+m[b.dataset.side]||0)-1);
+        const gl = (m.goals||[]); for (let i=gl.length-1;i>=0;i--) if (gl[i].side===side){ gl.splice(i,1); break; }
+        save();
+      }
+    }
+    else if (act==="gadd"){
+      const name = card.querySelector("[data-k=name]").value.trim().replace(/\s+/g," ");
+      const side = card.querySelector("[data-k=side]").value;
+      const num = card.querySelector("[data-k=num]").value.trim().replace(/\D/g,"") || knownNum(m, side, name);
+      addGoal(m, side, name, num);
+      card.querySelector("[data-k=name]").value = ""; card.querySelector("[data-k=num]").value = "";
+      save(); toast(["Golo", playerLabel({name,num}), teamName(side==="home"?m.home:m.away)].filter(Boolean).join(" · "));
+    }
+    else if (act==="gname"){ editGoal = {gid:b.dataset.gid, value:"", focus:true}; renderLive(); }
+    else if (act==="gnameok"){ saveGoalName(m, b.dataset.gid); }
+    else if (act==="gdel"){
+      const g = (m.goals||[]).find(x=>x.id===b.dataset.gid); if(!g) return;
+      m.goals = m.goals.filter(x=>x!==g);
+      const key = g.side==="home" ? "hg" : "ag"; m[key] = Math.max(0,(+m[key]||0)-1);
+      if (editGoal && editGoal.gid===g.id) editGoal = null;
+      save();
+    }
+    else if (act==="end"){ card.querySelector(".confirm").innerHTML=`<span>Terminar ${+m.hg||0}–${+m.ag||0}?</span><button type="button" data-act="back">Não</button><button type="button" class="primary" data-act="endok">Sim, terminar</button>`; }
+    else if (act==="cancel"){ card.querySelector(".confirm").innerHTML=`<span>Anular este jogo?</span><button type="button" data-act="back">Não</button><button type="button" class="danger" data-act="cancelok">Sim, anular</button>`; }
+    else if (act==="cy" || act==="cr"){
+      const name = card.querySelector("[data-k=name]").value.trim().replace(/\s+/g," ");
+      const num = card.querySelector("[data-k=num]").value.trim().replace(/\D/g,"");
+      if (!name && !num){ toast("Escreva o nome do jogador."); card.querySelector("[data-k=name]").focus(); return; }
+      const side = card.querySelector("[data-k=side]").value;
+      const type = addCard(m, side, name, num, act==="cy"?"Y":"R");
+      card.querySelector("[data-k=name]").value = ""; card.querySelector("[data-k=num]").value = "";
+      save(); toast(`${CARD_LABEL[type]} · ${playerLabel({name,num})}`);
+    }
+    else if (act==="c2"){
+      const c=(m.cards||[]).find(x=>x.id===b.dataset.cid); if(!c) return;
+      const type=addCard(m, c.side, c.name, c.num, "Y"); save(); toast(`${CARD_LABEL[type]} · ${playerLabel(c)}`);
+    }
+    else if (act==="cdel"){ m.cards=(m.cards||[]).filter(c=>c.id!==b.dataset.cid); save(); }
+    else if (act==="back"){ renderLive(); }
+    else if (act==="endok"){ setClock(m,"end"); m.status="done"; m.finished=now(); save(); toast("Jogo terminado."); }
+    else if (act==="cancelok"){ delete S.matches[id]; save(); }
+  });
+
+  $("results").addEventListener("click", e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    if (b.dataset.delMatch){ const li=b.closest("li");
+      li.querySelector(".res").insertAdjacentHTML("afterend",`<div class="confirm" style="margin-top:6px"><span>Apagar este resultado?</span><button type="button" data-no>Não</button><button type="button" class="danger" data-yes="${b.dataset.delMatch}">Apagar</button></div>`);
+      b.disabled=true; }
+    else if (b.dataset.yes){ delete S.matches[b.dataset.yes]; save(); }
+    else if (b.hasAttribute("data-no")){ renderResults(); }
+  });
+
+  for (const [k,el] of [["win","pWin"],["draw","pDraw"],["loss","pLoss"],["half","pHalf"]])
+    $(el).addEventListener("change", ()=>{ const v=parseInt($(el).value,10); if(v>=(k==="half"?1:0)){ S.cfg[k]=v; save(); } else renderCfg(); });
+  $("title").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); $("title").blur(); } });
+  $("title").addEventListener("blur", ()=>{ const t=$("title").textContent.trim().slice(0,80); if(t && t!==S.cfg.title){ S.cfg.title=t; save(); } else renderCfg(); });
+
+  // Reset
+  function resetIdle(){
+    $("resetZone").innerHTML=`<div class="toolbar"><button class="danger" id="rGames" type="button">Apagar todos os jogos</button><button class="danger" id="rAll" type="button">Começar torneio novo</button></div>`;
+    $("rGames").onclick=()=>ask("Apagar todos os jogos? As equipas ficam.","Apagar jogos",()=>{ S.matches={}; save(); toast("Jogos apagados."); });
+    $("rAll").onclick=()=>ask("Apagar equipas, jogos e nome? Guarde uma cópia antes, se precisar.","Apagar tudo",()=>{ S=DEFAULT(); save(); toast("Torneio novo pronto."); });
+  }
+  function ask(q,label,fn){
+    $("resetZone").innerHTML=`<div class="confirm"><span>${q}</span><button type="button" id="rNo">Cancelar</button><button type="button" class="danger" id="rYes">${label}</button></div>`;
+    $("rNo").onclick=resetIdle; $("rYes").onclick=()=>{ fn(); resetIdle(); };
+  }
+  resetIdle();
+
+  // Backup
+  $("exportBtn").addEventListener("click", ()=>{
+    const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+    const a = document.createElement("a");
+    const d = new Date(); const pad=n=>String(n).padStart(2,"0");
+    a.href = URL.createObjectURL(blob);
+    a.download = `torneio-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}.json`;
+    document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toast("Cópia guardada na pasta Transferências.");
+  });
+  $("importBtn").addEventListener("click", ()=>$("importFile").click());
+  $("importFile").addEventListener("change", async e=>{
+    const f=e.target.files[0]; e.target.value=""; if(!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      if (!d || typeof d!=="object" || !d.teams || !d.matches) throw 0;
+      ask(`Substituir os dados atuais pela cópia “${esc(f.name)}”?`,"Carregar cópia",()=>{ S={cfg:{...DEFAULT().cfg,...(d.cfg||{})},teams:d.teams,matches:d.matches}; save(); toast("Cópia carregada."); });
+    } catch(_){ toast("Esse ficheiro não é uma cópia do torneio."); }
+  });
+
+  // Login, mesa picker, links
+  $("loginForm").addEventListener("submit", e=>{
+    e.preventDefault();
+    const code = $("loginCode").value; if (!code) return;
+    $("loginBtn").disabled = true; $("loginErr").hidden = true;
+    firebase.auth().signInWithEmailAndPassword(EMAIL, code).then(()=>{ $("loginCode").value=""; toast("Entrou. Já pode registar."); })
+      .catch(err=>{ const c = String(err && err.code || "");
+        $("loginErr").textContent = /too-many/.test(c) ? "Muitas tentativas. Espere um minuto e tente outra vez." : /network/.test(c) ? "Sem internet. Ligue os dados móveis ou o Wi-Fi." : "Código errado. Confirme com a organização.";
+        $("loginErr").hidden = false; })
+      .finally(()=>{ $("loginBtn").disabled = false; });
+  });
+  $("mesaChips").addEventListener("click", e=>{ const b=e.target.closest("[data-mesa]"); if (b) setMesa(b.dataset.mesa); });
+  $("linksBody").addEventListener("click", e=>{
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id==="logoutBtn"){ firebase.auth().signOut(); return; }
+    const el = $(b.dataset.copy); if (!el) return;
+    const text = el.textContent;
+    const fallback = () => { const r=document.createRange(); r.selectNodeContents(el); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Link selecionado. Copie com Ctrl+C."); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(()=>toast("Link copiado."), fallback); else fallback();
+  });
+
+  // Views
+  $("openScreenBtn").addEventListener("click", ()=>{
+    const url = location.href.split("#")[0] + "#ecra";
+    const w = window.open(url, "ecra-torneio", "width=1280,height=800");
+    if (!w) { location.hash = "ecra"; }
+    else toast("Arraste a janela nova para a televisão e carregue em “Ecrã inteiro”.");
+  });
+  $("backBtn").addEventListener("click", ()=>{ location.hash = ""; });
+  $("fsBtn").addEventListener("click", ()=>{ document.documentElement.requestFullscreen?.().catch(()=>{}); });
+  window.addEventListener("hashchange", render);
+
+  $("incLive").addEventListener("change", e=>{ incLive=e.target.checked; renderStandings(); renderScorers(); });
+
+  if (ONLINE) startOnline(); else load();
+  render();
+})();
+</script>
+</body>
+</html>
